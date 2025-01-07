@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Kafka 管理工具</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap-icons/1.7.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/toastr.js/2.1.4/toastr.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="left-panel">
+            <div class="app-logo">
+                <div class="app-logo-text">
+                    Kafka <span>Web</span>
+                </div>
+            </div>
+            <div class="panel-header">
+                <h5 class="mb-0">数据源</h5>
+                <button class="btn btn-outline-primary btn-sm" id="addSourceBtn">
+                    <i class="bi bi-plus"></i>
+                    <span>新增</span>
+                </button>
+            </div>
+            <div class="panel-content" id="dataSourceList">
+                <!-- 数据源列表 -->
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-header">
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="mb-0" id="currentSource">未选择数据源</h5>
+                    <span id="connectionStatus" class="badge bg-secondary">未连接</span>
+                </div>
+            </div>
+            
+            <div class="content-body">
+                <div class="topic-list">
+                    <div class="topic-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="flex-grow-1">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" 
+                                           id="topicFilter" placeholder="过滤..."
+                                           style="border-left: none; padding-left: 0;">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-sm" id="createTopicBtn" title="创建Topic">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="topic-content" id="topicList"></div>
+                </div>
+                
+                <div class="message-panel">
+                    <div class="message-toolbar">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                            <div class="input-group input-group-sm" style="max-width: 300px;">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" 
+                                       id="messageFilter" placeholder="过滤消息内容..."
+                                       style="border-left: none; padding-left: 0;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="message-content" id="messageContent"></div>
+                    
+                    <div class="message-input">
+                        <form id="sendForm">
+                            <div class="mb-2">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">分区</span>
+                                            <input type="number" class="form-control" id="partition" 
+                                                   placeholder="可选" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Key</span>
+                                            <input type="text" class="form-control" id="messageKey" 
+                                                   placeholder="可选">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <textarea class="form-control" id="messageValue" 
+                                          rows="3" placeholder="输入消息内容（必填）..." required></textarea>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> 发送
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addSourceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加 Kafka 数据源</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="kafkaForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">数据源名称</label>
+                            <input type="text" class="form-control" id="sourceName" 
+                                   placeholder="请输入数据源名称" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kafka 地址</label>
+                            <input type="text" class="form-control" id="bootstrapServers" 
+                                   placeholder="例如: localhost:9092" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        删除确认
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="mb-0">确定要删除该数据源吗？此操作无法撤销。</p>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="bi bi-trash me-1"></i>
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createTopicModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建 Topic</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createTopicForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Topic 名称</label>
+                            <input type="text" class="form-control" id="topicName" 
+                                   placeholder="请输入Topic名称" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分区数</label>
+                            <input type="number" class="form-control" id="numPartitions" 
+                                   placeholder="请输入分区数" value="1" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">副本数</label>
+                            <input type="number" class="form-control" id="replicationFactor" 
+                                   placeholder="请输入副本数" value="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">创建</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteTopicModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        删除确认
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    确定要删除Topic "<span id="deleteTopicName" class="fw-bold"></span>" 吗？此操作无法撤销。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteTopicBtn">
+                        <i class="bi bi-trash me-1"></i>
+                        删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html> 
