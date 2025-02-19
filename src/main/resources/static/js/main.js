@@ -169,13 +169,19 @@ function setupMessageEvents() {
 function setupFilterEvents() {
     // Topic 过滤
     $('#topicFilter').on('input', function() {
-        const filterText = $(this).val().toLowerCase();
+        const filterText = $(this).val().toLowerCase().trim();
+        if (filterText === '') {
+            $('.topic-item').show();  // 如果过滤文本为空，显示所有项
+            return;
+        }
+        
         $('.topic-item').each(function() {
-            const topicName = $(this).text().trim().toLowerCase();
+            const $item = $(this);
+            const topicName = $item.find('.topic-name').text().toLowerCase();
             if (topicName.includes(filterText)) {
-                $(this).removeClass('filtered');
+                $item.show();
             } else {
-                $(this).addClass('filtered');
+                $item.hide();
             }
         });
     });
@@ -186,9 +192,9 @@ function setupFilterEvents() {
         $('.message-item').each(function() {
             const messageContent = $(this).find('.message-content-wrapper').text().toLowerCase();
             if (messageContent.includes(filterText)) {
-                $(this).removeClass('filtered');
+                $(this).show();
             } else {
-                $(this).addClass('filtered');
+                $(this).hide();
             }
         });
     });
@@ -219,6 +225,7 @@ function selectDataSource(id, servers) {
     
     $('#currentSource').text(sourceName);
     
+    $('#topicFilter').val('');
     $('#messageContent').empty();
     $('#messageFilter').val('');
     currentTopic = null;
@@ -292,33 +299,37 @@ function loadTopics(dataSourceId) {
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>`);
+    
     $.ajax({
         url: `${API_BASE_URL}/datasource/${dataSourceId}/topics`,
         method: 'GET',
-        cache: false,
-        timeout: 5000,
         success: function(response) {
             const $list = $('#topicList');
             $list.empty();
-            const filterText = $('#topicFilter').val().toLowerCase();
-            response.forEach(topic => {
-                const isFiltered = filterText && !topic.toLowerCase().includes(filterText);
+            
+            response.sort().forEach(topic => {
                 $list.append(`
-                    <div class="topic-item animate__animated animate__fadeIn ${isFiltered ? 'filtered' : ''}" 
-                        data-topic="${topic}">
-                        <button class="btn btn-outline-danger btn-sm delete-btn" 
-                                onclick="event.stopPropagation(); deleteTopic('${topic}');"
-                                title="删除Topic">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                    <div class="topic-item animate__animated animate__fadeIn" data-topic="${topic}">
                         <div class="topic-item-content">
                             <i class="bi bi-chat-text"></i>
-                            <div class="topic-name" title="${topic}">${topic}</div>
+                            <div class="topic-name">${topic}</div>
                         </div>
+                        <button class="btn btn-outline-danger btn-sm delete-btn" 
+                                onclick="event.stopPropagation(); deleteTopic('${topic}');">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </div>
                 `);
             });
             bindTopicEvents();
+            
+            const filterText = $('#topicFilter').val().toLowerCase().trim();
+            if (filterText) {
+                $('.topic-item').each(function() {
+                    const topicName = $(this).find('.topic-name').text().toLowerCase();
+                    $(this).toggle(topicName.includes(filterText));
+                });
+            }
         }
     });
 }
@@ -428,6 +439,8 @@ function renderMessages(messages) {
     }).join('');
     $('#messageContent').html(messagesHtml);
 
+    $('#messageContent').scrollTop(0);
+
     const filterText = $('#messageFilter').val().toLowerCase();
     if (filterText) {
         $('.message-item').each(function() {
@@ -437,7 +450,6 @@ function renderMessages(messages) {
             }
         });
     }
-    $('#messageContent').scrollTop($('#messageContent')[0].scrollHeight);
 }
 
 function sendMessage(topic, message) {

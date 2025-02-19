@@ -73,8 +73,19 @@ public class KafkaServiceImpl implements KafkaService {
     public Set<String> getTopics(Long dataSourceId) {
         log.info("Getting topics for data source: {}", dataSourceId);
         KafkaDataSource dataSource = getDataSourceOrThrow(dataSourceId);
-        KafkaConsumer<String, String> consumer = getOrCreateConsumer(dataSource);
-        return new TreeSet<>(consumer.listTopics().keySet());
+        
+        // 为每次请求创建新的 Consumer
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, dataSource.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-tool-list-topics-" + UUID.randomUUID());
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, 
+            "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, 
+            "org.apache.kafka.common.serialization.StringDeserializer");
+        
+        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
+            return new TreeSet<>(consumer.listTopics().keySet());
+        }
     }
 
     @Override
